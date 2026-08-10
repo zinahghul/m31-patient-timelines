@@ -1,0 +1,24 @@
+# Dataset files (Critical: Do not commit the Synthea EHR data)
+data/
+genomics/
+imaging/
+*.csv
+*.dcm
+
+# Python and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Weights & Biases logs
+wandb/
+
+# Model Checkpoints & Hugging Face artifacts
+checkpoints/
+*.safetensors
+*.bin
+
+# IDE and OS files
+.vscode/
+.DS_Store
