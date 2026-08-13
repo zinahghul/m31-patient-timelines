@@ -35,6 +35,12 @@ def process_train_val_labels(
     cond_tv = conditions[conditions['PATIENT'].isin(train_val_ids)].copy()
     
     code_col = [col for col in targets.columns if 'code' in col.lower()][0]
+    
+    # --- THE BUG FIX: Force these to strings BEFORE the merge ---
+    targets[code_col] = targets[code_col].astype(str)
+    cond_tv['CODE'] = cond_tv['CODE'].astype(str)
+    # ------------------------------------------------------------
+    
     target_codes = targets[code_col].unique()
     cond_targets = cond_tv[cond_tv['CODE'].isin(target_codes)].copy()
     cond_targets['START'] = pd.to_datetime(cond_targets['START'], utc=True)
@@ -65,6 +71,12 @@ def process_train_val_labels(
             
     labels_df.reset_index(inplace=True)
     
+    # --- SANITY CHECK ---
+    assert len(labels_df.columns) == 41, f"Expected 41 columns, got {len(labels_df.columns)}"
+    assert not any(col.endswith('.0') for col in labels_df.columns), "Found float column names!"
+    print("Sanity check passed: Labels cleanly generated.")
+    # --------------------
+
     # 5. Save the processed files
     anchors_path = os.path.join(output_dir, 'processed_anchors.csv')
     labels_path = os.path.join(output_dir, 'train_val_targets.csv')
