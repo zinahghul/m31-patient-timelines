@@ -9,11 +9,9 @@ from dataset import prepare_dataloaders
 from model import EHRTransformer
 from tqdm import tqdm
 
-# --- THE REAL WINDOWS FIX ---
 torch.backends.cuda.enable_flash_sdp(False)
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_math_sdp(True) 
-# ----------------------------
 
 def train_model():
     wandb.init(project="m31-patient-timelines", config={
@@ -29,10 +27,14 @@ def train_model():
     print(f"Training on device: {device}")
 
     train_loader, val_loader = prepare_dataloaders(batch_size=config.batch_size)
-    model = EHRTransformer(d_model=config.d_model, max_seq_len=config.max_seq_len).to(device)
     
+    # FIX: Dynamically determine num_classes from the actual dataset
+    sample_batch = next(iter(train_loader))
+    num_classes = sample_batch['labels'].shape[1]
+    
+    model = EHRTransformer(num_classes=num_classes, d_model=config.d_model, max_seq_len=config.max_seq_len).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
-    criterion = nn.BCEWithLogitsLoss() # Standard stable loss
+    criterion = nn.BCEWithLogitsLoss() 
 
     best_val_auc = 0.0
     os.makedirs('checkpoints', exist_ok=True)
@@ -43,11 +45,13 @@ def train_model():
         
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{config.epochs} [Train]"):
             input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
             labels = torch.nan_to_num(batch['labels'].to(device), nan=0.0)
             
             optimizer.zero_grad()
-            logits = model(input_ids)
             
+            # FIX: Pass attention mask through to the model
+            logits = model(input_ids, attention_mask=attention_mask)
             loss = criterion(logits, labels)
             loss.backward()
             
@@ -65,9 +69,10 @@ def train_model():
         with torch.no_grad():
             for batch in tqdm(val_loader, desc=f"Epoch {epoch+1}/{config.epochs} [Val]"):
                 input_ids = batch['input_ids'].to(device)
+                attention_mask = batch['attention_mask'].to(device)
                 labels = torch.nan_to_num(batch['labels'].to(device), nan=0.0)
                 
-                logits = model(input_ids)
+                logits = model(input_ids, attention_mask=attention_mask)
                 loss = criterion(logits, labels)
                 val_loss += loss.item()
                 
