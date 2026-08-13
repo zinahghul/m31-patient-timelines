@@ -49,7 +49,7 @@ def build_test_sequences(
         raise FileNotFoundError(f"No recognized tables found under {input_dir}")
 
     all_events = pd.concat(events_list, ignore_index=True)
-    all_events['START'] = pd.to_datetime(all_events['START'], utc=True)
+    all_events['START'] = pd.to_datetime(all_events['START'], utc=True, format='mixed')
     all_events.sort_values(by=['PATIENT', 'START'], inplace=True)
 
     print("Generating token ID sequences...")
