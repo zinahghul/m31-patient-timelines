@@ -5,6 +5,9 @@ imaging/
 *.csv
 *.dcm
 
+# Required submission predictions
+!predictions.csv
+
 # Python and virtual environments
 __pycache__/
 *.py[cod]
