@@ -14,6 +14,9 @@ Patient histories are converted into chronological clinical-event sequences with
 * 512-token maximum sequence length
 * 40-condition multi-label prediction
 
+![EHRTransformer Architecture](assets/architecture_diagram.png)
+*Figure 1: Patient timelines are converted into clinical-event and temporal-gap tokens, represented using learned token and positional embeddings, processed by a three-layer Transformer encoder, and summarized using the [CLS] representation for 40-condition multi-label prediction.*
+
 Timelines are truncated at an anchor date **five years before the patient's final recorded encounter** to prevent data leakage.
 
 The model uses `conditions`, `encounters`, `allergies`, and `careplans` data with a custom **209-token vocabulary** and seven categorical temporal intervals.
@@ -46,6 +49,8 @@ Test labels are withheld for independent scoring. The following results are from
 
 ```text
 m31-patient-timelines/
+├── assets/
+│   └── architecture_diagram.png
 ├── src/
 │   ├── build_labels.py
 │   ├── build_sequences.py
@@ -59,35 +64,3 @@ m31-patient-timelines/
 ├── predictions.csv
 ├── upload_model.py
 └── README.md
-```
-
-### Pipeline
-
-* `filter_timeline.py` — leak-free timeline filtering
-* `build_labels.py` — future-condition label generation
-* `build_vocab.py` — clinical event vocabulary
-* `build_sequences.py` — training/validation sequence construction
-* `build_test_sequences.py` — test sequence construction
-* `dataset.py` — PyTorch dataset and attention masks
-* `model.py` — EHRTransformer architecture
-* `train.py` — model training and validation
-* `predict.py` — test-set probability prediction
-* `upload_model.py` — model upload to Hugging Face
-
-## Test Predictions
-
-`predictions.csv` contains probability predictions for all test patients across the 40 target conditions using the required condition-code headers.
-
-## Trained Model
-
-**Hugging Face:** https://huggingface.co/zinahghulam/m31-patient-timelines
-
-## Experiment Tracking
-
-Training was monitored using Weights & Biases.
-
-**Run:** `2kcd1uk0`
-
-## AI-Assisted Development
-
-AI coding assistants were used for prototyping, debugging, code review, and identifying implementation issues involving label generation, attention masking, and datetime parsing.
