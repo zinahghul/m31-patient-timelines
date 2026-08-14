@@ -58,7 +58,7 @@ m31-patient-timelines/
 │   └── train.py
 ├── predictions.csv
 ├── upload_model.py
-└── ReadMe.md
+└── README.md
 ```
 
 ### Pipeline
