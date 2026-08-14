@@ -37,10 +37,10 @@ Test labels are withheld for independent scoring. The following results are from
 
 | Metric      | Validation |
 | ----------- | ---------: |
-| Macro AUROC | **0.6648** |
-| mAP         | **0.1301** |
-| Macro F1    | **0.1341** |
-| Brier Score | **0.2064** |
+| Macro AUROC | **0.6642** |
+| mAP         | **0.1344** |
+| Macro F1    | **0.1380** |
+| Brier Score | **0.1953** |
 
 ## Repository Structure
 
