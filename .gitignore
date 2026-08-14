@@ -4,6 +4,7 @@ genomics/
 imaging/
 *.csv
 *.dcm
+!predictions.csv
 
 # Python and virtual environments
 __pycache__/
