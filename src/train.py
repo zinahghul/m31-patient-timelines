@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import wandb
 import os
@@ -13,11 +14,37 @@ torch.backends.cuda.enable_flash_sdp(False)
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_math_sdp(True) 
 
+class FocalLoss(nn.Module):
+    def __init__(self, pos_weight=None, gamma=2.0, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.pos_weight = pos_weight
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        # Calculate standard BCE with the class weights applied
+        bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, pos_weight=self.pos_weight, reduction='none')
+        
+        # Calculate the probabilities
+        pt = torch.sigmoid(inputs)
+        pt_true = pt * targets + (1 - pt) * (1 - targets)
+        
+        # Apply the modulating factor
+        modulating_factor = (1.0 - pt_true) ** self.gamma
+        focal_loss = modulating_factor * bce_loss
+        
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        elif self.reduction == 'sum':
+            return focal_loss.sum()
+        else:
+            return focal_loss
+
 def train_model():
     wandb.init(project="m31-patient-timelines", config={
         "batch_size": 32,
         "learning_rate": 1e-4,
-        "epochs": 15,
+        "epochs": 25,
         "d_model": 128,
         "max_seq_len": 512
     })
@@ -41,7 +68,8 @@ def train_model():
     model = EHRTransformer(num_classes=num_classes, d_model=config.d_model, max_seq_len=config.max_seq_len).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
     
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    # Initialize the custom Focal Loss with the derived positive weights
+    criterion = FocalLoss(pos_weight=pos_weights, gamma=2.0)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2)
 
     best_val_auc = 0.0
